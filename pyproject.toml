@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isingedge"
+version = "0.0.1"
+description = "Joint placement / tensor-network rank / bit-width planning for on-device LLM agents on Snapdragon, solved as one QUBO with simulated bifurcation."
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+solve = ["simulated-bifurcation>=2.0", "dwave-samplers>=1.2", "ortools>=9.9"]
+tn = ["torch>=2.2", "tntorch>=1.1"]
+hub = ["qai-hub>=0.56", "onnx>=1.16", "onnxruntime>=1.18", "huggingface_hub>=0.24"]
+all = ["isingedge[dev,solve,tn,hub]"]
+
+[tool.setuptools.packages.find]
+include = ["isingedge*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

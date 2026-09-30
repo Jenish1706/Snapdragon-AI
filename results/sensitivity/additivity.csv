@@ -1,0 +1,24 @@
+item,n,median,mean,max,measured_pct,linear_sum_pct,log_additive_pct,pairwise_multiplicative_pct,note
+pairs: linear-additive abs error (pp),40,0.2306,0.5587,10.0645,,,,,
+pairs: log-additive abs error (pp),40,0.2078,0.5066,9.9320,,,,,
+pairs: log-space interaction log(1+d_ij) - log(1+a_i) - log(1+a_j),40,0.0013,0.0039,0.0882,,,,,29 of 40 super-additive in log space
+"plan mb_K6_pairwise (6 MLPs, 40 chunks)",6,,,,7.8107,6.9908,7.1898,7.1870,
+"plan mb_K6_random0 (6 MLPs, 40 chunks)",6,,,,23.4997,17.2931,18.5126,18.4719,
+"plan mb_K6_random1 (6 MLPs, 40 chunks)",6,,,,17.5341,13.9710,14.7870,14.7635,
+"plan mb_K6_random2 (6 MLPs, 40 chunks)",6,,,,22.1791,15.8410,16.8951,16.8604,
+"plan mb_K12_pairwise (12 MLPs, 40 chunks)",12,,,,26.3133,19.1705,20.9242,20.8347,
+"plan mb_K12_random0 (12 MLPs, 40 chunks)",12,,,,85.2768,32.7547,38.0660,37.6091,
+"plan mb_K12_random1 (12 MLPs, 40 chunks)",12,,,,37.4937,24.9990,27.9810,27.7892,
+"plan mb_K12_random2 (12 MLPs, 40 chunks)",12,,,,58.5622,28.7223,32.7353,32.4349,
+"plan mb_K18_pairwise (18 MLPs, 40 chunks)",18,,,,64.3969,36.1698,42.9902,42.2951,
+"plan mb_K18_random0 (18 MLPs, 40 chunks)",18,,,,213.7613,55.8182,72.8289,70.2532,
+"plan mb_K18_random1 (18 MLPs, 40 chunks)",18,,,,153.6073,53.0991,68.3686,66.1617,
+"plan mb_K18_random2 (18 MLPs, 40 chunks)",18,,,,196.0127,72.2374,99.1089,94.5189,
+"plan mb_K24_pairwise (24 MLPs, 40 chunks)",24,,,,275.5970,57.7483,76.7518,73.6160,
+"plan mb_K24_random0 (24 MLPs, 40 chunks)",24,,,,264.9389,83.9003,123.1297,114.9980,
+"plan mb_K24_random1 (24 MLPs, 40 chunks)",24,,,,658.4201,67.7922,94.5311,89.4801,
+"plan mb_K24_random2 (24 MLPs, 40 chunks)",24,,,,630.8495,90.0631,136.8599,126.3235,
+"mac dp-additive (24 MLPs): log-additive bounds, estimate",,,,,275.5600,57.7800,73.67 to 78.21,,"estimate: lower = v3's multiplicative pairwise prediction, upper = 100(exp(sum/100) - 1)"
+"mac exact1 (18 MLPs): log-additive bounds, estimate",,,,,64.4100,36.1900,42.33 to 43.61,,"estimate: lower = v3's multiplicative pairwise prediction, upper = 100(exp(sum/100) - 1)"
+"mac exact2 (19 MLPs): log-additive bounds, estimate",,,,,70.3200,39.4300,46.74 to 48.33,,"estimate: lower = v3's multiplicative pairwise prediction, upper = 100(exp(sum/100) - 1)"
+"mac exact3 (19 MLPs): log-additive bounds, estimate",,,,,79.8700,39.4600,46.78 to 48.38,,"estimate: lower = v3's multiplicative pairwise prediction, upper = 100(exp(sum/100) - 1)"

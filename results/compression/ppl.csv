@@ -1,0 +1,4 @@
+tag,method,keep,scaling,layers,rank,rel_error,ppl,ppl_err,chunks,dense_ppl,delta_pct,seconds,build
+dense-fp32,dense,1.0,-,-,,,21.884388762207106,0.19144395825371271,584,21.884388762207106,0.0,64.5,"PyTorch 2.14.1+cu126 CUDA 12.6 fp32, NVIDIA GeForce RTX 3060 Laptop GPU, transformers 5.17.0"
+imx-svd-k0.9,svd,0.9,imatrix,2-25,704,0.32219852199802707,53.17397159924349,0.5122610044023712,584,21.884388762207106,142.97672727817476,64.3,"PyTorch 2.14.1+cu126 CUDA 12.6 fp32, NVIDIA GeForce RTX 3060 Laptop GPU, transformers 5.17.0"
+imx-mpoA-k0.9,mpo,0.9,imatrix,2-25,bond 240,39.06092941055428,39.04895804234901,0.3389483344472846,584,21.884388762207106,78.43293896233455,65.9,"PyTorch 2.14.1+cu126 CUDA 12.6 fp32, NVIDIA GeForce RTX 3060 Laptop GPU, transformers 5.17.0"
