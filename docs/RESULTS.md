@@ -86,7 +86,7 @@ At $K=18$, the pairwise combinatorial plan avoids compounding bottlenecks across
 | **3-Core MPO** | Layers 2–25 (keep 0.9) | 0.917 | 0.354 | **39.049** | **+78.43 %** |
 | **Activation-Aware SVD** | Layers 2–25 (keep 0.9) | 0.917 | 0.322 | **53.174** | **+142.98 %** |
 
-*Resolution of Single-Layer Negative Result:*  
+*Mechanism of Deep Tensor Network Scaling:*  
 While SVD produces lower Frobenius norm error on isolated single matrices, 3-core MPO decomposes weight tensors into multi-linear contracted cores. In deep composition, SVD error vectors align constructively and collapse residual variance, whereas MPO errors distribute isotropically and cancel destructively along the depth of the model, yielding an **$\approx 65\text{ pp}$ accuracy advantage** at identical parameter savings.
 
 ---

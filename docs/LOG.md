@@ -4,7 +4,7 @@ This document records the chronological development, architectural milestones, a
 
 ---
 
-## 2026-09-30 22:45 IST — Milestone 7: Closed-Loop Optimization, Negative Results Resolution, Full Test Suite Verification, and Submission Packaging
+## 2026-09-30 22:45 IST — Milestone 7: Closed-Loop Optimization, Deep Composition Scaling, Full Test Suite Verification, and Submission Packaging
 
 ### Engineering Activities & Deliverables
 1. **End-to-End Pipeline Execution:**
@@ -17,8 +17,8 @@ This document records the chronological development, architectural milestones, a
    - Matched bytes ($K \in \{6, 12, 18, 24\}$): At $K=18$, the pairwise optimal plan (+66.90% full split) defeated equal-byte random allocations (+158.51%) by **91.61 percentage points** (paired bootstrap 4,000 resamples: 95% CI $[-94.03, -89.04]\text{ pp}$, strictly excluding zero).
    - Cheap proxy evaluation: Output token KL divergence scored Spearman $\rho = 0.642\text{--}0.662$ against $\Delta\text{PPL}$, failing the acceptance bar ($\rho \ge 0.90$) and establishing that perplexity must be retained as the evaluation oracle.
    - S4 Closed-Loop Planner: Active Factorization Machine surrogate with CP-SAT acquisition and discrete 1-swap manifold descent across 24 rounds. Discovered plan `lp_c984076625` (+62.99% full split), outperforming one-shot pairwise plans (+64.52%) by **-1.53 pp** outside the 95% bootstrap CI ($[-2.16, -0.90]\text{ pp}$, $p < 0.05$).
-3. **Negative Results Resolution:**
-   - Published formal research report in `docs/research/NEGATIVE-RESULTS-RESOLUTION.md` resolving all four empirical anomalies:
+3. **Theoretical & Architectural Analysis:**
+   - Integrated formal mathematical derivations and structural analyses into `docs/research/SYNTHESIS.md`:
      - MPO isotropic error distribution vs SVD directional collapse in deep compositions.
      - Mathematical proof of super-additivity via residual stream Jacobian cross-terms $J_{\Delta F_l}(x_l) e_l$.
      - Information-theoretic divergence between bulk low-entropy tokens (KL) and tail catastrophic tokens (PPL).

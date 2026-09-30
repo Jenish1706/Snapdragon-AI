@@ -23,8 +23,7 @@
 - **[docs/PROPOSAL.md](docs/PROPOSAL.md):** The comprehensive technical proposal, theoretical derivations, and architectural specifications.
 - **[docs/SUBMISSION.md](docs/SUBMISSION.md):** The official challenge submission pack, executive abstract, criteria mapping, and reproduction guide.
 - **[docs/RESULTS.md](docs/RESULTS.md):** Complete empirical benchmark ledger across baselines, sensitivity, multi-layer scaling, and solver benchmarks.
-- **[docs/research/NEGATIVE-RESULTS-RESOLUTION.md](docs/research/NEGATIVE-RESULTS-RESOLUTION.md):** Theoretical and empirical resolution of negative findings in prior literature.
-- **[docs/research/SYNTHESIS.md](docs/research/SYNTHESIS.md):** Systematic research synthesis of surrogate optimization and heterogeneous edge execution.
+- **[docs/research/SYNTHESIS.md](docs/research/SYNTHESIS.md):** Comprehensive research synthesis of surrogate optimization, theoretical derivations, and heterogeneous edge execution.
 
 ---
 
