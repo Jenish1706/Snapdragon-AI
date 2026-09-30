@@ -8,7 +8,7 @@
 
 ## Overview
 
-**Ising-Edge** is a combinatorial optimization framework that jointly determines on-device execution strategies for Small Language Models (SLMs) across heterogeneous Snapdragon System-on-Chips (CPU, Adreno GPU, and Hexagon NPU). By formulating compute unit placement, mixed precision ($\text{Q4\_0}, \text{Q8\_0}$), and low-rank compression as a single Quadratic Unconstrained Binary Optimization (QUBO) / Ising Hamiltonian, Ising-Edge prevents non-linear cross-layer accuracy collapse and synthesizes optimal runtime configurations emitted as native `llama.cpp` CLI flags.
+**Ising-Edge** is a combinatorial optimization framework that jointly determines on-device execution strategies for Small Language Models (SLMs) across heterogeneous Snapdragon System-on-Chips (CPU, Adreno GPU, and Hexagon NPU). By formulating compute unit placement, mixed precision (`Q4_0`, `Q8_0`), and low-rank compression as a single Quadratic Unconstrained Binary Optimization (QUBO) / Ising Hamiltonian, Ising-Edge prevents non-linear cross-layer accuracy collapse and synthesizes optimal runtime configurations emitted as native `llama.cpp` CLI flags.
 
 ### Key Discoveries & Features
 - **Super-Additivity Mitigation:** Identifies and compensates for non-linear error compounding across deep transformer layers via measured 2nd-order interaction terms ($Q_{ij}$).
