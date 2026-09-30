@@ -1,0 +1,269 @@
+[ok] all compression rows come from one build
+[ok] results were measured in PyTorch fp32 on an RTX 3060 Laptop GPU
+[ok] build string matches env.build
+[ok] full test split = 584 chunks
+[ok] paired fast split = 40 chunks
+[ok] single-layer rows are activation-aware (imatrix) SVD only
+[ok] single-layer rows cover keep 0.8 and 0.9 only
+[ok] keep 0.8 -> rank 608, keep 0.9 -> rank 704
+[ok] dense MLP = 3 x 1024 x 3072 = 9,437,184 parameters
+[ok] compressed MLP parameters = 3 x rank x (1024 + 3072)
+[ok] saved parameters per MLP: 1,966,080 (keep 0.8), 786,432 (keep 0.9)
+[ok] loop byte units: keep 0.9 saves 2, keep 0.8 saves 5
+[ok] 28 layers measured at each keep
+[ok] keep 0.8: most sensitive layer 27, least 8
+[ok] 40 random layer pairs at keep 0.8
+[ok] pair 0+1: interaction = measured - sum of singles
+[ok] pair 0+6: interaction = measured - sum of singles
+[ok] pair 0+9: interaction = measured - sum of singles
+[ok] pair 0+13: interaction = measured - sum of singles
+[ok] pair 0+15: interaction = measured - sum of singles
+[ok] pair 0+26: interaction = measured - sum of singles
+[ok] pair 1+5: interaction = measured - sum of singles
+[ok] pair 1+8: interaction = measured - sum of singles
+[ok] pair 2+10: interaction = measured - sum of singles
+[ok] pair 2+14: interaction = measured - sum of singles
+[ok] pair 3+18: interaction = measured - sum of singles
+[ok] pair 3+25: interaction = measured - sum of singles
+[ok] pair 4+8: interaction = measured - sum of singles
+[ok] pair 4+15: interaction = measured - sum of singles
+[ok] pair 5+24: interaction = measured - sum of singles
+[ok] pair 6+19: interaction = measured - sum of singles
+[ok] pair 7+14: interaction = measured - sum of singles
+[ok] pair 7+16: interaction = measured - sum of singles
+[ok] pair 7+21: interaction = measured - sum of singles
+[ok] pair 8+14: interaction = measured - sum of singles
+[ok] pair 8+20: interaction = measured - sum of singles
+[ok] pair 8+23: interaction = measured - sum of singles
+[ok] pair 9+16: interaction = measured - sum of singles
+[ok] pair 9+19: interaction = measured - sum of singles
+[ok] pair 9+27: interaction = measured - sum of singles
+[ok] pair 10+12: interaction = measured - sum of singles
+[ok] pair 11+12: interaction = measured - sum of singles
+[ok] pair 12+13: interaction = measured - sum of singles
+[ok] pair 12+23: interaction = measured - sum of singles
+[ok] pair 13+21: interaction = measured - sum of singles
+[ok] pair 13+24: interaction = measured - sum of singles
+[ok] pair 14+16: interaction = measured - sum of singles
+[ok] pair 14+21: interaction = measured - sum of singles
+[ok] pair 16+17: interaction = measured - sum of singles
+[ok] pair 16+24: interaction = measured - sum of singles
+[ok] pair 16+26: interaction = measured - sum of singles
+[ok] pair 18+20: interaction = measured - sum of singles
+[ok] pair 19+20: interaction = measured - sum of singles
+[ok] pair 23+24: interaction = measured - sum of singles
+[ok] pair 24+26: interaction = measured - sum of singles
+[ok] 33 of 40 pairs super-additive; largest interaction at layers 0+1
+[ok] leave-one-pair-out selects the multiplicative pair model
+[ok] per-chunk NLL: 584 chunks x 255 scored tokens
+[ok] dense full-split PPL recomputed from chunk NLL
+[ok] K=6: pairwise, additive and greedy selections coincide (method label)
+[ok] K=6: three random plans
+[ok] K=6: bootstrap CI recomputed from chunk NLL
+[ok] K=6: the full-split comparison uses the best of the three random plans
+[ok] K=6: difference = model plan - best random plan (pp of dense PPL)
+[ok] K=12: pairwise, additive and greedy selections coincide (method label)
+[ok] K=12: three random plans
+[ok] K=12: bootstrap CI recomputed from chunk NLL
+[ok] K=12: the full-split comparison uses the best of the three random plans
+[ok] K=12: difference = model plan - best random plan (pp of dense PPL)
+[ok] K=18: pairwise, additive and greedy selections coincide (method label)
+[ok] K=18: three random plans
+[ok] K=18: bootstrap CI recomputed from chunk NLL
+[ok] K=18: the full-split comparison uses the best of the three random plans
+[ok] K=18: difference = model plan - best random plan (pp of dense PPL)
+[ok] K=24: pairwise, additive and greedy selections coincide (method label)
+[ok] K=24: three random plans
+[ok] K=24: bootstrap CI recomputed from chunk NLL
+[ok] K=24: the full-split comparison uses the best of the three random plans
+[ok] K=24: difference = model plan - best random plan (pp of dense PPL)
+[ok] K=24: the model plan is worse than the best random plan
+[ok] K=24 model plan compresses layers 0, 2-14, 16-25
+[ok] K=24: measured / linear sum = 4.77
+[ok] loop search space: 24 MLP blocks x 2 compressed options = 48 binaries
+[ok] loop search space: 24 MLP blocks x 2 compressed options = 48 binaries
+[ok] K=12 budget: 9,928,631,398 feasible plans
+[ok] every method and seed measured exactly 24 plans
+[ok] every loop acquisition was solved to proven optimality (CP-SAT)
+[ok] K=12: local search from the one-shot best never improves on it
+[ok] K=18: local search from the one-shot best never improves on it
+[ok] loop = one-shot plan in 3/3 seeds (K=12) and 2/3 (K=18)
+[ok] random search trails one-shot by 20.2-85.3 pp
+[ok] K=18 seed 2 vs one-shot: bootstrap CI recomputed from chunk NLL
+[ok] K=18: seed-2 plan and one-shot plan differ by one swapped layer (3 vs 4)
+[ok] the seed-2 plan was also among the one-shot top-24 plans
+[ok] K=12: calibration on 72 held-out random plans
+[ok] K=12: surrogate under-predicts damage on held-out plans (negative mean bias)
+[ok] K=18: calibration on 72 held-out random plans
+[ok] K=18: surrogate under-predicts damage on held-out plans (negative mean bias)
+[ok] 36 acquisition rounds per K and solver
+[ok] ballistic SB raw samples violated the constraints in 72 of 72 rounds
+[ok] greedy moves stay feasible
+[ok] KL proxy scored on the 28 single-layer keep-0.8 rows
+[ok] both KL directions fall below the 0.90 acceptance bar
+[ok] MPO and SVD both compress layers 2-25 at keep 0.9
+[ok] MPO bond 240 matched to SVD rank 704
+[ok] MPO (bond 240) and SVD (rank 704) parameter counts agree within 0.2%
+[ok] value cal.K12.bias.max is LaTeX-safe
+[ok] value cal.K12.bias.min is LaTeX-safe
+[ok] value cal.K12.mae.max is LaTeX-safe
+[ok] value cal.K12.mae.min is LaTeX-safe
+[ok] value cal.K12.rho.max is LaTeX-safe
+[ok] value cal.K12.rho.min is LaTeX-safe
+[ok] value cal.K18.bias.max is LaTeX-safe
+[ok] value cal.K18.bias.min is LaTeX-safe
+[ok] value cal.K18.mae.max is LaTeX-safe
+[ok] value cal.K18.mae.min is LaTeX-safe
+[ok] value cal.K18.rho.max is LaTeX-safe
+[ok] value cal.K18.rho.min is LaTeX-safe
+[ok] value cal.bias.hi is LaTeX-safe
+[ok] value cal.bias.lo is LaTeX-safe
+[ok] value ctx is LaTeX-safe
+[ok] value dense.fast.chunks is LaTeX-safe
+[ok] value dense.fast.err is LaTeX-safe
+[ok] value dense.fast.ppl is LaTeX-safe
+[ok] value dense.full.chunks is LaTeX-safe
+[ok] value dense.full.err is LaTeX-safe
+[ok] value dense.full.ppl is LaTeX-safe
+[ok] value env.build is LaTeX-safe
+[ok] value frac.k08 is LaTeX-safe
+[ok] value frac.k09 is LaTeX-safe
+[ok] value kl.bar is LaTeX-safe
+[ok] value kl.hi is LaTeX-safe
+[ok] value kl.lo is LaTeX-safe
+[ok] value kl.rev.rho is LaTeX-safe
+[ok] value kl.rho is LaTeX-safe
+[ok] value loop.K12.count is LaTeX-safe
+[ok] value loop.K12.count.exp is LaTeX-safe
+[ok] value loop.K12.count.mant is LaTeX-safe
+[ok] value loop.K12.loop.catchup is LaTeX-safe
+[ok] value loop.K12.one.fast is LaTeX-safe
+[ok] value loop.K12.one.first is LaTeX-safe
+[ok] value loop.K12.one.full is LaTeX-safe
+[ok] value loop.K12.rand.best.fast.max is LaTeX-safe
+[ok] value loop.K12.rand.best.fast.min is LaTeX-safe
+[ok] value loop.K12.rand.full.max is LaTeX-safe
+[ok] value loop.K12.rand.full.min is LaTeX-safe
+[ok] value loop.K12.rand.gap.max is LaTeX-safe
+[ok] value loop.K12.rand.gap.min is LaTeX-safe
+[ok] value loop.K12.same is LaTeX-safe
+[ok] value loop.K18.count is LaTeX-safe
+[ok] value loop.K18.count.exp is LaTeX-safe
+[ok] value loop.K18.count.mant is LaTeX-safe
+[ok] value loop.K18.loop.catchup is LaTeX-safe
+[ok] value loop.K18.one.fast is LaTeX-safe
+[ok] value loop.K18.one.first is LaTeX-safe
+[ok] value loop.K18.one.full is LaTeX-safe
+[ok] value loop.K18.rand.best.fast.max is LaTeX-safe
+[ok] value loop.K18.rand.best.fast.min is LaTeX-safe
+[ok] value loop.K18.rand.full.max is LaTeX-safe
+[ok] value loop.K18.rand.full.min is LaTeX-safe
+[ok] value loop.K18.rand.gap.max is LaTeX-safe
+[ok] value loop.K18.rand.gap.min is LaTeX-safe
+[ok] value loop.K18.s2.diff is LaTeX-safe
+[ok] value loop.K18.s2.fast is LaTeX-safe
+[ok] value loop.K18.s2.fastgap is LaTeX-safe
+[ok] value loop.K18.s2.full is LaTeX-safe
+[ok] value loop.K18.s2.hi is LaTeX-safe
+[ok] value loop.K18.s2.lo is LaTeX-safe
+[ok] value loop.K18.same is LaTeX-safe
+[ok] value loop.evals is LaTeX-safe
+[ok] value loop.fm.rank is LaTeX-safe
+[ok] value loop.nbin is LaTeX-safe
+[ok] value loop.seeds is LaTeX-safe
+[ok] value mb.K12.abs is LaTeX-safe
+[ok] value mb.K12.diff is LaTeX-safe
+[ok] value mb.K12.diff.short is LaTeX-safe
+[ok] value mb.K12.hi is LaTeX-safe
+[ok] value mb.K12.lo is LaTeX-safe
+[ok] value mb.K12.plan.fast is LaTeX-safe
+[ok] value mb.K12.plan.full is LaTeX-safe
+[ok] value mb.K12.pred.lin is LaTeX-safe
+[ok] value mb.K12.pred.log is LaTeX-safe
+[ok] value mb.K12.pred.pw is LaTeX-safe
+[ok] value mb.K12.rand.full is LaTeX-safe
+[ok] value mb.K12.saved.frac is LaTeX-safe
+[ok] value mb.K12.saved.params is LaTeX-safe
+[ok] value mb.K18.abs is LaTeX-safe
+[ok] value mb.K18.diff is LaTeX-safe
+[ok] value mb.K18.diff.short is LaTeX-safe
+[ok] value mb.K18.hi is LaTeX-safe
+[ok] value mb.K18.lo is LaTeX-safe
+[ok] value mb.K18.plan.fast is LaTeX-safe
+[ok] value mb.K18.plan.full is LaTeX-safe
+[ok] value mb.K18.pred.lin is LaTeX-safe
+[ok] value mb.K18.pred.log is LaTeX-safe
+[ok] value mb.K18.pred.pw is LaTeX-safe
+[ok] value mb.K18.rand.full is LaTeX-safe
+[ok] value mb.K18.saved.frac is LaTeX-safe
+[ok] value mb.K18.saved.params is LaTeX-safe
+[ok] value mb.K24.abs is LaTeX-safe
+[ok] value mb.K24.diff is LaTeX-safe
+[ok] value mb.K24.diff.short is LaTeX-safe
+[ok] value mb.K24.hi is LaTeX-safe
+[ok] value mb.K24.layers is LaTeX-safe
+[ok] value mb.K24.lo is LaTeX-safe
+[ok] value mb.K24.plan.fast is LaTeX-safe
+[ok] value mb.K24.plan.full is LaTeX-safe
+[ok] value mb.K24.pred.lin is LaTeX-safe
+[ok] value mb.K24.pred.log is LaTeX-safe
+[ok] value mb.K24.pred.pw is LaTeX-safe
+[ok] value mb.K24.rand.full is LaTeX-safe
+[ok] value mb.K24.ratio is LaTeX-safe
+[ok] value mb.K24.saved.frac is LaTeX-safe
+[ok] value mb.K24.saved.params is LaTeX-safe
+[ok] value mb.K6.abs is LaTeX-safe
+[ok] value mb.K6.diff is LaTeX-safe
+[ok] value mb.K6.diff.short is LaTeX-safe
+[ok] value mb.K6.hi is LaTeX-safe
+[ok] value mb.K6.lo is LaTeX-safe
+[ok] value mb.K6.plan.fast is LaTeX-safe
+[ok] value mb.K6.plan.full is LaTeX-safe
+[ok] value mb.K6.pred.lin is LaTeX-safe
+[ok] value mb.K6.pred.log is LaTeX-safe
+[ok] value mb.K6.pred.pw is LaTeX-safe
+[ok] value mb.K6.rand.full is LaTeX-safe
+[ok] value mb.K6.saved.frac is LaTeX-safe
+[ok] value mb.K6.saved.params is LaTeX-safe
+[ok] value mb.boot.reps is LaTeX-safe
+[ok] value mlp.total.params is LaTeX-safe
+[ok] value motif.n is LaTeX-safe
+[ok] value mpo.bond is LaTeX-safe
+[ok] value mpo.delta is LaTeX-safe
+[ok] value mpo.layers is LaTeX-safe
+[ok] value mpo.params.frac is LaTeX-safe
+[ok] value mpo.ppl is LaTeX-safe
+[ok] value pairs.inter.max is LaTeX-safe
+[ok] value pairs.inter.max.pair is LaTeX-safe
+[ok] value pairs.inter.median is LaTeX-safe
+[ok] value pairs.loo.add is LaTeX-safe
+[ok] value pairs.loo.mult is LaTeX-safe
+[ok] value pairs.n is LaTeX-safe
+[ok] value pairs.super is LaTeX-safe
+[ok] value rank.k08 is LaTeX-safe
+[ok] value rank.k09 is LaTeX-safe
+[ok] value sens.k08.L18 is LaTeX-safe
+[ok] value sens.k08.L26 is LaTeX-safe
+[ok] value sens.k08.max is LaTeX-safe
+[ok] value sens.k08.max.layer is LaTeX-safe
+[ok] value sens.k08.median is LaTeX-safe
+[ok] value sens.k08.min is LaTeX-safe
+[ok] value sens.k08.min.layer is LaTeX-safe
+[ok] value sens.k09.max is LaTeX-safe
+[ok] value sens.k09.max.layer is LaTeX-safe
+[ok] value sens.k09.median is LaTeX-safe
+[ok] value sens.k09.min is LaTeX-safe
+[ok] value sens.k09.min.layer is LaTeX-safe
+[ok] value solve.greedy.K12.median is LaTeX-safe
+[ok] value solve.greedy.K12.opt is LaTeX-safe
+[ok] value solve.greedy.K12.sec is LaTeX-safe
+[ok] value solve.greedy.K18.median is LaTeX-safe
+[ok] value solve.greedy.K18.opt is LaTeX-safe
+[ok] value solve.greedy.K18.sec is LaTeX-safe
+[ok] value solve.greedy.opt is LaTeX-safe
+[ok] value solve.rounds is LaTeX-safe
+[ok] value solve.sa.infeasible is LaTeX-safe
+[ok] value solve.sbb.infeasible is LaTeX-safe
+[ok] value solve.sbd.infeasible is LaTeX-safe
+[ok] value svd.delta is LaTeX-safe
+[ok] value svd.ppl is LaTeX-safe

@@ -1,423 +1,224 @@
-\documentclass[aspectratio=169]{beamer}
-
-\usetheme{metropolis}
-
-% Color scheme: Professional blues/teals
-\definecolor{TechBlue}{HTML}{005587}
-\definecolor{Teal}{HTML}{007C92}
-\definecolor{LightTeal}{HTML}{E0F2F1}
-\definecolor{AccentOrange}{HTML}{F57C00}
-\definecolor{WarnRed}{HTML}{D32F2F}
-\definecolor{GoodGreen}{HTML}{2E7D32}
-
-\setbeamercolor{palette primary}{bg=TechBlue, fg=white}
-\setbeamercolor{title separator}{fg=Teal}
-\setbeamercolor{progress bar}{fg=Teal, bg=gray!20}
-\setbeamercolor{alerted text}{fg=AccentOrange}
-\setbeamercolor{block title alerted}{bg=AccentOrange!15, fg=AccentOrange!80!black}
-\setbeamercolor{block body alerted}{bg=AccentOrange!5}
-
-\usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc, fit, backgrounds}
-\usepackage{booktabs}
-\usepackage{graphicx}
-\usepackage{amsmath}
-\usepackage{fontawesome5}
-
-\title{Ising-Edge}
-\subtitle{Joint Compute Placement, Precision \& Low-Rank Compression\\via Quadratic Binary Optimisation for Snapdragon Edge AI}
-\author{Jenish Patel}
-\institute{Snapdragon AI Challenge 2026 \\ \small Track: On-Device Generative AI Acceleration \& Optimization}
-\date{September 30, 2026}
-
+% Ising-Edge pitch deck -- compile with: xelatex pitch_deck.tex (twice). Numbers come from generated/values.tex (build_data.py).
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage{fontspec}
+\setsansfont{Inter}[Path=assets/fonts/, Extension=.otf, UprightFont=*-Regular, BoldFont=*-SemiBold, ItalicFont=*-Italic, BoldItalicFont=*-SemiBold]
+\setmainfont{Inter}[Path=assets/fonts/, Extension=.otf, UprightFont=*-Regular, BoldFont=*-SemiBold, ItalicFont=*-Italic, BoldItalicFont=*-SemiBold]
+\usefonttheme{professionalfonts}
+\usepackage{amsmath,booktabs,tikz,pgfplots}
+\usetikzlibrary{arrows.meta,positioning,calc}
+\pgfplotsset{compat=1.18}
+\newcommand{\ievalue}[2]{\expandafter\gdef\csname iev@#1\endcsname{#2}}
+\newcommand{\V}[1]{\ifcsname iev@#1\endcsname\csname iev@#1\endcsname\else\errmessage{Unknown value #1}\fi}
+\input{generated/values.tex}
+\definecolor{ink}{HTML}{0B1F33}\definecolor{ink2}{HTML}{3E4C5E}\definecolor{muted}{HTML}{6B7686}
+\definecolor{rule}{HTML}{D8DEE6}\definecolor{panel}{HTML}{F3F6F9}\definecolor{blue}{HTML}{2A78D6}
+\definecolor{bluedk}{HTML}{1C5CAB}\definecolor{orange}{HTML}{EB6834}\definecolor{aqua}{HTML}{1BAF7A}
+\definecolor{gseries}{HTML}{A8A7A0}\definecolor{good}{HTML}{006300}\definecolor{bad}{HTML}{D03B3B}
+\setbeamercolor{normal text}{fg=ink}\setbeamercolor{structure}{fg=bluedk}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{itemize item}{\color{blue}\rule[0.2ex]{0.8ex}{0.8ex}}
+\setbeamertemplate{frametitle}{\vspace*{2mm}{\scriptsize\color{bluedk}\bfseries\MakeUppercase{\insertframesubtitle}\par}\vspace{0.6mm}{\Large\bfseries\color{ink}\insertframetitle\par}\vspace{-0.5mm}\textcolor{rule}{\rule{\textwidth}{0.4pt}}}
+\setbeamertemplate{footline}{\hspace*{4mm}{\tiny\color{muted}Ising-Edge \textperiodcentered{} Snapdragon AI Challenge 2026\hfill\insertframenumber\,/\,\inserttotalframenumber}\hspace*{4mm}\vspace*{2mm}}
+\newcommand{\source}[1]{\par\vfill{\tiny\color{muted}#1\par}}
+\newcommand{\metric}[3]{\begin{tikzpicture}\node[fill=panel,rounded corners=2pt,inner sep=5pt,text width=#3,align=left]{{\Large\bfseries\color{bluedk}#1}\\[1pt]{\scriptsize\color{ink2}#2}};\end{tikzpicture}}
+\pgfplotsset{ie/.style={font=\tiny,axis lines=left,axis line style={muted},tick style={muted},ymajorgrids,grid style={rule},
+  every axis label/.style={font=\tiny,color=ink2},ylabel style={at={(axis description cs:-0.08,0.5)}},enlarge x limits=0.08,legend style={draw=none,fill=none,font=\tiny}}}
+\hypersetup{pdftitle={Ising-Edge: budget-exact compression planning for on-device LLMs},pdfauthor={Jenish Patel}}
+\title{Ising-Edge}\author{Jenish Patel}\date{30 September 2026}
 \begin{document}
 
-% ============================================================
-% SLIDE 1: Title
-% ============================================================
-\maketitle
-
-% ============================================================
-% SLIDE 2: The Problem
-% ============================================================
-\begin{frame}{The Problem: No Single Engine Wins}
-\begin{columns}[T]
-\column{0.55\textwidth}
-\textbf{Snapdragon SoCs} have 3 compute engines:
-\begin{itemize}
-    \item \textbf{Hexagon NPU} \textrightarrow{} Up to \alert{5$\times$ faster prefill}
-    \item \textbf{CPU / GPU} \textrightarrow{} Up to \alert{2.5$\times$ faster decode}
-\end{itemize}
-
-\vspace{0.8em}
-\textbf{Current approaches fail because:}
-\begin{itemize}
-    \item Placement, quantization, and compression are treated as \emph{disconnected} problems
-    \item Compression damage is \emph{non-linear} and \emph{coupled} across layers
-\end{itemize}
-
-\column{0.42\textwidth}
-\small
-\begin{tabular}{@{}lcc@{}}
-\toprule
-\textbf{Engine} & \textbf{Prefill} & \textbf{Decode} \\
-\midrule
-NPU & \textcolor{GoodGreen}{\textbf{2,643}} & 45.9 \\
-GPU & 665 & 42.8 \\
-CPU & 353 & \textcolor{GoodGreen}{\textbf{47.9}} \\
-\bottomrule
-\end{tabular}
-\vspace{0.3em}
-
-\centering\scriptsize Galaxy S26, Qwen3-1.7B Q4\_0\\
-512 context, tok/s\\[0.3em]
-\scriptsize\textit{Source: Qualcomm perf.yaml}
-\end{columns}
-\end{frame}
-
-% ============================================================
-% SLIDE 3: Why It Matters
-% ============================================================
-\begin{frame}{The Compression Damage Trap}
-\begin{columns}[T]
-\column{0.58\textwidth}
-\textbf{Single-layer planning is mathematically invalid.}
-
-\vspace{0.5em}
-Compressing 24 MLP blocks (layers 2--25):
-
-\vspace{0.5em}
-\begin{tabular}{@{}lr@{}}
-\toprule
-\textbf{Prediction Method} & $\Delta$\textbf{PPL} \\
-\midrule
-Linear sum of single layers & +57.8\% \\
-Log-additive model & +76.8\% \\
-\textbf{Actual measured} & \textcolor{WarnRed}{\textbf{+275.6\%}} \\
-\bottomrule
-\end{tabular}
-
-\vspace{0.8em}
-\textbf{4.8$\times$ underestimation} when ignoring cross-layer interactions.
-
-\column{0.38\textwidth}
-\centering
-\begin{tikzpicture}[scale=0.8]
-\fill[LightTeal] (0,0) rectangle (2.5,1.5);
-\fill[WarnRed!20] (0,0) rectangle (2.5,4.6);
-\draw[thick,TechBlue,fill=TechBlue!60] (0.3,0) rectangle (1.0,1.5);
-\draw[thick,WarnRed,fill=WarnRed!60] (1.5,0) rectangle (2.2,4.6);
-\node[font=\scriptsize\bfseries,rotate=90] at (0.65,0.75) {+58\%};
-\node[font=\scriptsize\bfseries,rotate=90] at (1.85,2.3) {+276\%};
-\node[font=\scriptsize,anchor=north] at (0.65,-0.15) {Linear};
-\node[font=\scriptsize,anchor=north] at (1.85,-0.15) {Actual};
-\node[font=\tiny,anchor=north] at (1.25,-0.7) {24-layer joint compression};
+% 1 ---------------------------------------------------------------------------------------------
+{\setbeamercolor{background canvas}{bg=ink}\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+\vspace*{4mm}{\scriptsize\color{blue!45}\bfseries SNAPDRAGON AI CHALLENGE 2026 \textperiodcentered{} ON-DEVICE GENERATIVE AI ACCELERATION \& OPTIMIZATION\par}
+\vspace{7mm}{\fontsize{34}{36}\selectfont\bfseries\color{white}Ising-Edge\par}
+\vspace{3mm}{\large\color{white}Budget-exact compression planning for on-device LLMs\par}
+\vspace{1mm}{\small\color{blue!35}Measure $\rightarrow$ fit $\rightarrow$ solve: measured perplexity, a quadratic surrogate, an exact solver\par}
+\vspace{7mm}
+\begin{tikzpicture}
+\pgfplotstableread[col sep=comma]{figures/data/plan_K18.csv}\plan
+\foreach \L in {0,...,27}{\pgfplotstablegetelem{\L}{state}\of\plan
+ \def\c{white!12!ink}\ifdefstring{\pgfplotsretval}{keep08}{\def\c{blue}}{}\ifdefstring{\pgfplotsretval}{dense}{\def\c{white!35!ink}}{}
+ \fill[\c] (\L*0.47,0) rectangle ++(0.38,0.38);}
+\node[anchor=west,font=\tiny,text=blue!35] at (0,-0.28) {Example output: \V{motif.n}-MLP byte-budget plan, layers 0--27 (blue = keep 0.8, grey = dense, dark = not searched); full-split $\Delta$PPL +\V{loop.K18.s2.full}\%};
 \end{tikzpicture}
+\vfill{\normalsize\color{white}Jenish Patel\par}{\scriptsize\color{blue!35}30 September 2026\par}\vspace*{3mm}
+\end{frame}}
+
+% 2 ---------------------------------------------------------------------------------------------
+\begin{frame}{Every layer needs a compression decision}{The problem}
+\begin{columns}[T]\column{0.57\textwidth}\small
+\begin{itemize}\setlength\itemsep{3pt}
+\item Edge devices impose tight memory and bandwidth limits on small language models.
+\item Low-rank compression of MLP weights saves bytes, but its cost depends on \emph{which} layers are compressed and \emph{how strongly}.
+\item On Snapdragon, each weight tensor can also be placed on CPU, Adreno GPU or Hexagon NPU (llama.cpp tensor overrides).
+\item The decision is a \textbf{plan over all layers under a hard byte budget}: a combinatorial problem.
+\end{itemize}
+\column{0.39\textwidth}
+\metric{\V{loop.K12.count.mant}\,\texttimes\,10\textsuperscript{\V{loop.K12.count.exp}}}{feasible plans for one budget: 24 MLP blocks (layers 2--25) \texttimes{} \{dense, keep 0.9, keep 0.8\}, bytes of 12 MLPs at keep 0.8}{0.9\linewidth}
 \end{columns}
+\source{Plan count from isingedge/loop/space.py (Space.count); llama.cpp placement per docs/research/hetero-placement-2026.md.}
 \end{frame}
 
-% ============================================================
-% SLIDE 4: Our Solution
-% ============================================================
-\begin{frame}{Ising-Edge: Unified QUBO Optimization}
-\textbf{Jointly optimizes} across every transformer block:
+% 3 ---------------------------------------------------------------------------------------------
+\begin{frame}{Where you compress matters}{Evidence 1 \textperiodcentered{} single-layer sensitivity}
+\begin{columns}[T]\column{0.64\textwidth}
+\begin{tikzpicture}\begin{axis}[ie,width=\linewidth,height=5.2cm,ybar,bar width=3pt,ymin=0,xtick={0,3,...,27},
+ xlabel={layer whose MLP is compressed alone (keep 0.8)},ylabel={$\Delta$PPL vs dense (\%)}]
+\addplot[fill=blue,draw=none] table[col sep=comma,x=layer,y=keep08]{figures/data/sensitivity.csv};
+\draw[muted,thin] (axis cs:-1,\V{sens.k08.median}) -- (axis cs:28,\V{sens.k08.median}) node[pos=0.62,above,font=\tiny,text=ink2,anchor=south west]{median \V{sens.k08.median}\%};
+\node[font=\tiny,text=ink,anchor=east] at (axis cs:26.4,\V{sens.k08.max}) {+\V{sens.k08.max}\%};
+\node[font=\tiny,text=ink,anchor=south] at (axis cs:8,5.2) {+\V{sens.k08.min}\%};
+\end{axis}\end{tikzpicture}
+\column{0.34\textwidth}\vspace{2mm}
+\metric{+\V{sens.k08.min}\% to +\V{sens.k08.max}\%}{damage range across the 28 layers (layer \V{sens.k08.min.layer} vs layer \V{sens.k08.max.layer})}{0.9\linewidth}\\[2mm]
+\metric{+\V{sens.k08.median}\%}{median layer at keep 0.8 (+\V{sens.k09.median}\% at keep 0.9)}{0.9\linewidth}
+\end{columns}
+\source{Activation-aware SVD of one MLP (rank \V{rank.k08}); WikiText-2, 40 chunks \texttimes{} 512 tokens. results/sensitivity/qwen3-0.6b\_layer\_sensitivity.csv}
+\end{frame}
 
-\vspace{0.3em}
-\begin{columns}[T]
-\column{0.45\textwidth}
-\begin{enumerate}
-    \item \textbf{Compute placement} \textrightarrow{} CPU, GPU, NPU
-    \item \textbf{Weight precision} \textrightarrow{} Q4\_0, Q8\_0
-    \item \textbf{Compression level} \textrightarrow{} SVD \& MPO rank
+% 4 ---------------------------------------------------------------------------------------------
+\begin{frame}{Damage compounds: per-layer costs do not add up}{Evidence 2 \textperiodcentered{} interactions}
+\begin{columns}[T]\column{0.58\textwidth}
+\begin{tikzpicture}\begin{axis}[ie,width=\linewidth,height=5.2cm,ybar,bar width=9pt,ymin=0,ymax=310,symbolic x coords={6,12,18,24},xtick=data,
+ xlabel={MLPs compressed at keep 0.8 (model-chosen plan)},ylabel={$\Delta$PPL vs dense (\%)},legend pos=north west,
+ nodes near coords,every node near coord/.append style={font=\tiny,text=ink},nodes near coords style={/pgf/number format/fixed,/pgf/number format/precision=1}]
+\addplot[fill=gseries,draw=none] table[col sep=comma,x=K,y=pred_pairwise]{figures/data/superadditivity.csv};
+\addplot[fill=blue,draw=none] table[col sep=comma,x=K,y=measured_fast]{figures/data/superadditivity.csv};
+\legend{predicted (singles + pair model),measured}
+\end{axis}\end{tikzpicture}
+\column{0.40\textwidth}\small
+\metric{+\V{mb.K24.plan.fast}\% vs +\V{mb.K24.pred.lin}\%}{24 MLPs: measured vs summed single-layer costs (\V{mb.K24.ratio}\texttimes); log-additive +\V{mb.K24.pred.log}\%, pair model +\V{mb.K24.pred.pw}\%}{0.92\linewidth}\\[2mm]
+\scriptsize\V{pairs.super} of \V{pairs.n} random layer pairs are super-additive (median \V{pairs.inter.median} pp; largest \V{pairs.inter.max} pp, layers \V{pairs.inter.max.pair}).\\[1mm]
+\textbf{Plans must be measured, not only predicted.}
+\end{columns}
+\source{40 chunks. results/matched\_bytes/summary.csv, results/sensitivity/qwen3-0.6b\_pair\_sensitivity.csv}
+\end{frame}
+
+% 5 ---------------------------------------------------------------------------------------------
+\begin{frame}{Ising-Edge: measure $\rightarrow$ fit $\rightarrow$ solve}{Our approach}
+\begin{tikzpicture}[box/.style={fill=panel,rounded corners=2pt,text width=4.1cm,minimum height=2.1cm,align=left,inner sep=5pt,font=\scriptsize},a/.style={-{Stealth},thick,blue}]
+\node[box](m){{\small\bfseries\color{bluedk}1 \;Measure}\\[2pt]Compress the plan's MLPs (activation-aware SVD) and score WikiText-2 perplexity on 40 fixed chunks; keep per-chunk NLL.};
+\node[box,right=6mm of m](f){{\small\bfseries\color{bluedk}2 \;Fit}\\[2pt]Quadratic surrogate of $\log(\mathrm{PPL}/\mathrm{PPL}_{\text{dense}})$ over one-hot plan bits: pair model (one-shot) or rank-\V{loop.fm.rank} factorization machine (loop).};
+\node[box,right=6mm of f](s){{\small\bfseries\color{bluedk}3 \;Solve}\\[2pt]Minimise it exactly with CP-SAT: at most one option per layer, exact byte budget, no-good cuts on measured plans.};
+\draw[a](m)--(f);\draw[a](f)--(s);\draw[a](s.south)--++(0,-3mm)-|(m.south);
+\end{tikzpicture}\\[4mm]
+\centering\small$\displaystyle\min_{x\in\{0,1\}^{\V{loop.nbin}}}\; w_0+\sum_i w_i x_i+\sum_{i<j}\langle v_i,v_j\rangle x_i x_j\quad\text{s.t.}\;\sum_{o}x_{l,o}\le 1\;\forall l,\;\;\sum_i u_i x_i=B$\\[3mm]
+\raggedright\scriptsize Output: per-layer keep fractions, re-measured on the full \V{dense.full.chunks}-chunk split with paired-bootstrap CIs. The same QUBO form admits latency (SnapTwin) and CPU/GPU/NPU placement terms: \textcolor{bad}{implemented, not yet validated on a device}.
+\end{frame}
+
+% 6 ---------------------------------------------------------------------------------------------
+\begin{frame}{Implementation: what is built and tested}{Implementation}
+\begin{columns}[T]\column{0.56\textwidth}\scriptsize
+\begin{tabular}{@{}lll@{}}\toprule\textbf{Component}&\textbf{Module}&\textbf{Status}\\\midrule
+Plan space, exact byte budget&loop/space.py&\textcolor{good}{evaluated}\\
+Factorization machine (L-BFGS-B)&loop/fm.py&\textcolor{good}{evaluated}\\
+CP-SAT / exact / greedy / SA / SB&loop/acquire.py&\textcolor{good}{evaluated}\\
+Perplexity oracle, SVD + MPO&loop/oracle.py&\textcolor{good}{evaluated}\\
+Paired bootstrap, Spearman&loop/stats.py&\textcolor{good}{evaluated}\\
+SnapTwin prefill/decode model&twin/snaptwin.py&unit-tested\\
+Placement QUBO (CPU/GPU/NPU)&qubo/planner.py&unit-tested\\
+adb + llama-bench runners&bench/, scripts/&\textcolor{bad}{not yet run}\\\bottomrule\end{tabular}
+\column{0.41\textwidth}\scriptsize
+\begin{itemize}\setlength\itemsep{2pt}
+\item Qwen3-0.6B, 28 layers; MLP 1024\texttimes3072 (gate, up, down)
+\item keep 0.8 $\rightarrow$ rank \V{rank.k08} (\V{frac.k08}\% of MLP params); keep 0.9 $\rightarrow$ rank \V{rank.k09} (\V{frac.k09}\%)
+\item WikiText-2 test, context \V{ctx}; second half of each chunk scored
+\item All results: \V{env.build}
+\item Tests: 56 collected; 52 pass, 3 skip (optional torch/onnxruntime), 1 fails (smoke import of two subpackages missing from this snapshot)
+\end{itemize}
+\end{columns}
+\source{Paths relative to isingedge/. Test run: python -m pytest tests/ (this snapshot).}
+\end{frame}
+
+% 7 ---------------------------------------------------------------------------------------------
+\begin{frame}{At equal bytes, planned layers beat random ones (K $\le$ 18)}{Result 1 \textperiodcentered{} matched bytes, full 584-chunk split}
+\begin{columns}[T]\column{0.57\textwidth}
+\begin{tikzpicture}\begin{axis}[ie,width=\linewidth,height=5.2cm,ybar,bar width=9pt,ymin=0,ymax=330,symbolic x coords={6,12,18,24},xtick=data,
+ xlabel={K MLPs compressed at keep 0.8 (identical bytes)},ylabel={$\Delta$PPL vs dense (\%)},legend pos=north west]
+\addplot[fill=blue,draw=none] table[col sep=comma,x=K,y=plan_full]{figures/data/matched_bytes.csv};
+\addplot[fill=gseries,draw=none] table[col sep=comma,x=K,y=random_full]{figures/data/matched_bytes.csv};
+\legend{model-chosen plan,best of 3 random plans}
+\node[font=\tiny,text=good,anchor=south] at (axis cs:6,20) {\V{mb.K6.diff.short} pp};
+\node[font=\tiny,text=good,anchor=south] at (axis cs:12,40) {\V{mb.K12.diff.short} pp};
+\node[font=\tiny,text=good,anchor=south] at (axis cs:18,162) {\V{mb.K18.diff.short} pp};
+\node[font=\tiny,text=bad,anchor=south east] at (axis cs:24,287) {\V{mb.K24.diff.short} pp (worse)};
+\end{axis}\end{tikzpicture}
+\column{0.41\textwidth}
+\metric{\V{mb.K18.diff.short} pp}{K = 18: +\V{mb.K18.plan.full}\% vs +\V{mb.K18.rand.full}\%; 95\% CI [\V{mb.K18.lo}, \V{mb.K18.hi}] pp}{0.92\linewidth}\\[1.5mm]
+\scriptsize
+\begin{itemize}\setlength\itemsep{1pt}
+\item K = 6 / 12: \V{mb.K6.diff} pp [\V{mb.K6.lo}, \V{mb.K6.hi}] / \V{mb.K12.diff} pp [\V{mb.K12.lo}, \V{mb.K12.hi}]
+\item K = 24: \textcolor{bad}{model plan loses} by \V{mb.K24.diff} pp [\V{mb.K24.lo}, \V{mb.K24.hi}]: pair terms miss large-plan compounding
+\item Pair, additive and log-additive models pick the same layers here
+\end{itemize}
+\end{columns}
+\source{Paired bootstrap (\V{mb.boot.reps} resamples), recomputed from results/sensitivity/qwen3-0.6b\_plan\_chunk\_nll.csv; results/matched\_bytes/summary.csv}
+\end{frame}
+
+% 8 ---------------------------------------------------------------------------------------------
+\begin{frame}{The loop recovers the one-shot optimum; random trails by 20--85 pp}{Result 2 \textperiodcentered{} closed loop, 24 measured plans per run}
+\begin{columns}[T]\column{0.55\textwidth}
+\begin{tikzpicture}\begin{axis}[ie,width=\linewidth,height=5.2cm,xmin=1,xmax=24,ymin=50,ymax=190,xlabel={measured plans (K = 18 budget)},ylabel={best $\Delta$PPL so far (\%, 40 chunks)},legend style={at={(0.5,1.03)},anchor=south},legend columns=2]
+\addplot[blue,thick] table[col sep=comma,x=n,y=oneshot]{figures/data/regret_K18.csv};
+\addplot[orange,thick] table[col sep=comma,x=n,y=loop_med]{figures/data/regret_K18.csv};
+\addplot[aqua,thick,densely dotted] table[col sep=comma,x=n,y=local_med]{figures/data/regret_K18.csv};
+\addplot[gseries,thick] table[col sep=comma,x=n,y=random_med]{figures/data/regret_K18.csv};
+\legend{one-shot (pair model),loop (median of 3),local search,random (median of 3)}
+\end{axis}\end{tikzpicture}
+\column{0.43\textwidth}\scriptsize
+\begin{tabular}{@{}lll@{}}\toprule K&one-shot&random (3 seeds)\\\midrule
+12&+\V{loop.K12.one.full}\%&+\V{loop.K12.rand.full.min}--\V{loop.K12.rand.full.max}\%\\
+18&+\V{loop.K18.one.full}\%&+\V{loop.K18.rand.full.min}--\V{loop.K18.rand.full.max}\%\\\bottomrule\end{tabular}\\[2mm]
+\begin{itemize}\setlength\itemsep{1pt}
+\item Loop = one-shot plan in 3/3 seeds (K = 12) and \V{loop.K18.same}/3 (K = 18); full-split $\Delta$PPL above
+\item K = 18 seed 2: one swapped layer, \V{loop.K18.s2.diff} pp on the full split [\V{loop.K18.s2.lo}, \V{loop.K18.s2.hi}] but \V{loop.K18.s2.fastgap} pp on the 40-chunk objective
+\item Every acquisition solved to optimality by CP-SAT (\V{loop.nbin} binaries)
+\end{itemize}
+\end{columns}
+\source{results/loop/evals.csv, results/loop/summary.csv. Plan budget in bytes of K MLPs at keep 0.8; options dense / keep 0.9 / keep 0.8 on layers 2--25.}
+\end{frame}
+
+% 9 ---------------------------------------------------------------------------------------------
+\begin{frame}{What the measurements decided}{Evidence-based design choices}
+\begin{columns}[T]\column{0.49\textwidth}
+\metric{\V{solve.greedy.opt} / \V{solve.rounds}}{rounds where greedy + swap descent matched the exact surrogate optimum (median gap \V{solve.greedy.K12.median}\% at K = 12, \V{solve.greedy.K18.median}\% at K = 18); ballistic-SB raw samples broke the constraints in \V{solve.sbb.infeasible}/\V{solve.rounds} $\Rightarrow$ exact CP-SAT}{0.93\linewidth}\\[2mm]
+\metric{$\rho$ = \V{cal.K18.rho.min}--\V{cal.K12.rho.max}}{surrogate rank correlation on 72 held-out random plans; it under-predicts damage (log-ratio bias \V{cal.bias.lo} to \V{cal.bias.hi}) $\Rightarrow$ re-measure every chosen plan}{0.93\linewidth}
+\column{0.49\textwidth}
+\metric{$\rho$ = \V{kl.rho}}{Spearman of KL(dense$\|$compressed) vs single-layer $\Delta$PPL (95\% CI \V{kl.lo}--\V{kl.hi}), below the \V{kl.bar} bar $\Rightarrow$ perplexity stays the oracle}{0.93\linewidth}\\[2mm]
+\metric{\V{mpo.ppl} vs \V{svd.ppl} PPL}{3-core MPO vs SVD, layers \V{mpo.layers} at equal params (\V{mpo.params.frac}\%), dense \V{dense.full.ppl}; accuracy only, no speed claim}{0.93\linewidth}
+\end{columns}
+\source{results/loop/solver\_gaps.csv, results/loop/calibration.csv, results/sensitivity/qwen3-0.6b\_kl\_proxy\_summary.csv, results/compression/ppl.csv}
+\end{frame}
+
+% 10 --------------------------------------------------------------------------------------------
+\begin{frame}{Limitations and next steps}{Honest status}
+\begin{columns}[T]\column{0.52\textwidth}\scriptsize\textbf{\small Limitations}
+\begin{itemize}\setlength\itemsep{2pt}
+\item No Snapdragon measurements in this repository: latency, memory and energy not measured; SnapTwin and the placement QUBO are unit-tested only
+\item One model (Qwen3-0.6B), one metric (WikiText-2 perplexity), one runtime (PyTorch fp32, laptop GPU); no task accuracy
+\item Post-training compression without healing: damage is large (+\V{mb.K18.plan.full}\% at K = 18)
+\item Pair model fails for large plans (K = 24); loop gains are small at 24 evaluations
+\item Plan-export and device scripts reference data not in this snapshot; one failing smoke test
+\end{itemize}
+\column{0.45\textwidth}\scriptsize\textbf{\small Next steps}
+\begin{enumerate}\setlength\itemsep{2pt}
+\item Run the scripted llama-bench sweeps (llama.cpp b11256) on a Snapdragon device over adb: CPU, GPU, NPU
+\item Fit SnapTwin on device data; add latency terms to the same QUBO
+\item Export plans as llama.cpp tensor overrides; measure TTFT, decode rate, memory
+\item Add plan-size / higher-order terms; evaluate task accuracy and healing
 \end{enumerate}
-
-\vspace{0.8em}
-All mapped into a single Ising Hamiltonian:
-\[ \min_{x}\; \mathcal{H}(x) = c^T\!x + x^T\!Qx \]
-
-\column{0.50\textwidth}
-\begin{itemize}
-    \item $c_i$: Isolated latency + accuracy penalty
-    \item $Q_{ij}$: Hardware switching costs + \textbf{cross-layer perplexity coupling}
-    \item Constraints: one-hot per layer, memory budget
-\end{itemize}
-
-\vspace{0.5em}
-\alert{Output:} Native \texttt{llama.cpp} flags\\
-\texttt{-dev HTP0,GPUOpenCL,none}\\
-\texttt{-ot "blk.[0-12].*=HTP0"}\\
-\texttt{-ctk q8\_0 -ctv q4\_0}
 \end{columns}
 \end{frame}
 
-% ============================================================
-% SLIDE 5: Architecture
-% ============================================================
-\begin{frame}{System Architecture}
-\begin{center}
-\begin{tikzpicture}[
-    node distance=0.8cm and 1.2cm,
-    box/.style={rectangle, draw=TechBlue, rounded corners=3pt, fill=TechBlue!8,
-                text centered, font=\small, minimum height=1cm, text width=2.8cm},
-    bigbox/.style={rectangle, draw=Teal, rounded corners=3pt, fill=Teal!8,
-                   text centered, font=\small, minimum height=1cm, text width=3.5cm},
-    outbox/.style={rectangle, draw=AccentOrange, rounded corners=3pt, fill=AccentOrange!8,
-                   text centered, font=\small, minimum height=1cm, text width=3cm},
-    arr/.style={-{Stealth[scale=1]}, thick, TechBlue!70}
-]
-
-% Row 1
-\node[box] (model) {Model \& Workload\\[-2pt]\scriptsize Qwen3-0.6B};
-
-% Row 2
-\node[box, below left=1cm and 0.5cm of model] (twin) {SnapTwin\\[-2pt]\scriptsize Perf.\ Model};
-\node[box, below right=1cm and 0.5cm of model] (oracle) {Sensitivity\\[-2pt]\scriptsize Oracle};
-
-% Row 3
-\node[bigbox, below=2.2cm of model] (qubo) {QUBO / Ising\\[-2pt]\scriptsize $\mathcal{H}(x) = c^Tx + x^TQx$};
-
-% Row 4
-\node[box, below left=1cm and 0.5cm of qubo] (cpsat) {CP-SAT\\[-2pt]\scriptsize Exact Solver};
-\node[box, below right=1cm and 0.5cm of qubo] (swap) {Greedy 1-Swap\\[-2pt]\scriptsize $<$5\,ms};
-
-% Row 5
-\node[outbox, below=2.2cm of qubo] (deploy) {llama.cpp Flags\\[-2pt]\scriptsize Zero-Code Deploy};
-
-% FM surrogate loop
-\node[box, right=1.5cm of qubo, text width=2.5cm] (fm) {FM Surrogate\\[-2pt]\scriptsize Closed Loop};
-
-% Arrows
-\draw[arr] (model) -| (twin);
-\draw[arr] (model) -| (oracle);
-\draw[arr] (twin) |- (qubo);
-\draw[arr] (oracle) |- (qubo);
-\draw[arr] (qubo) -| (cpsat);
-\draw[arr] (qubo) -| (swap);
-\draw[arr] (cpsat) |- (deploy);
-\draw[arr] (swap) |- (deploy);
-\draw[arr, dashed, Teal] (fm) -- (qubo);
-\draw[arr, dashed, Teal] (deploy.east) -- ++(0.7,0) |- (fm.south);
-
-\end{tikzpicture}
-\end{center}
-\end{frame}
-
-% ============================================================
-% SLIDE 6: Result 1 — Matched Bytes
-% ============================================================
-\begin{frame}{Result: Combinatorial Superiority at Matched Bytes}
-\begin{columns}[T]
-\column{0.55\textwidth}
-Under \textbf{strictly identical byte budgets} ($K\!=\!18$ MLPs at keep~0.8):
-
-\vspace{0.5em}
-\begin{tabular}{@{}llr@{}}
-\toprule
-\textbf{Budget} & \textbf{Plan} & $\Delta$\textbf{PPL} \\
-\midrule
-$K\!=\!6$ & Pairwise & \textcolor{GoodGreen}{\textbf{+6.76\%}} \\
-$K\!=\!6$ & Random & +17.37\% \\
-\midrule
-$K\!=\!12$ & Pairwise & \textcolor{GoodGreen}{\textbf{+27.05\%}} \\
-$K\!=\!12$ & Random & +36.83\% \\
-\midrule
-$K\!=\!18$ & Pairwise & \textcolor{GoodGreen}{\textbf{+66.90\%}} \\
-$K\!=\!18$ & Random & +158.51\% \\
-\bottomrule
-\end{tabular}
-
-\column{0.42\textwidth}
+% 11 --------------------------------------------------------------------------------------------
+\begin{frame}{Compression plans must be measured and solved jointly}{Takeaway}
+\small Which layers to compress is a combinatorial choice with compounding costs. Measuring whole plans and solving exactly under a byte budget finds much better plans than random choice, and shows where simple models fail.\\[5mm]
 \centering
-\vspace{1em}
-\begin{tikzpicture}
-\node[draw=Teal, fill=Teal!10, rounded corners, inner sep=10pt, text width=3.5cm, align=center, font=\large] {
-\textbf{91.61 pp}\\[0.3em]
-\normalsize advantage at $K\!=\!18$\\[0.3em]
-\scriptsize 95\% CI: $[-94.03, -89.04]$\\
-\scriptsize $p < 10^{-4}$
-};
-\end{tikzpicture}
-\end{columns}
-
-\vspace{0.5em}
-\small Paired bootstrap, 4,000 resamples. Full 584-chunk WikiText-2 evaluation.
+\metric{\V{mb.K18.diff.short} pp}{vs best random plan at equal bytes (K = 18)}{3.5cm}\hspace{2mm}
+\metric{\V{mb.K24.ratio}\texttimes}{measured vs summed single-layer damage (24 MLPs)}{3.5cm}\hspace{2mm}
+\metric{\V{loop.K12.count.mant}\,\texttimes\,10\textsuperscript{\V{loop.K12.count.exp}}}{plans per budget, solved to optimality by CP-SAT}{3.5cm}\\[5mm]
+\raggedright\scriptsize\textcolor{good}{\textbf{Measured:}} accuracy-side planner \quad \textcolor{bad}{\textbf{Not yet validated:}} Snapdragon placement (SnapTwin + placement QUBO) \quad \textbf{Next:} on-device sweeps\\[1mm]
+\color{muted}Jenish Patel \textperiodcentered{} Ising-Edge (MIT) \textperiodcentered{} Qwen3 (Apache-2.0) \textperiodcentered{} llama.cpp (MIT)
 \end{frame}
-
-% ============================================================
-% SLIDE 7: Result 2 — MPO vs SVD
-% ============================================================
-\begin{frame}{Result: Tensor Network Scaling (MPO vs.\ SVD)}
-\begin{columns}[T]
-\column{0.55\textwidth}
-Across 24 layers (2--25) at \textbf{keep 0.9}, matched parameters:
-
-\vspace{0.8em}
-\begin{tabular}{@{}lrr@{}}
-\toprule
-\textbf{Method} & \textbf{PPL} & $\Delta$\textbf{PPL} \\
-\midrule
-Dense baseline & 21.884 & --- \\
-\textbf{3-Core MPO} & \textcolor{GoodGreen}{\textbf{39.049}} & \textcolor{GoodGreen}{\textbf{+78.4\%}} \\
-Activation SVD & 53.174 & +143.0\% \\
-\bottomrule
-\end{tabular}
-
-\vspace{0.8em}
-\textbf{$\sim$65 pp advantage} for MPO over SVD.
-
-\column{0.42\textwidth}
-\vspace{0.5em}
-\textbf{Why MPO wins in deep composition:}
-
-\vspace{0.5em}
-\small
-\begin{itemize}[nosep]
-\item SVD errors \emph{align constructively} along residual stream
-\item MPO distributes error \emph{isotropically} across tensor cores
-\item Errors cancel \emph{destructively} over depth
-\end{itemize}
-\end{columns}
-\end{frame}
-
-% ============================================================
-% SLIDE 8: Solver Performance
-% ============================================================
-\begin{frame}{Solver Performance: Discrete Dominates Continuous}
-\vspace{0.3em}
-\begin{table}[]
-\centering
-\begin{tabular}{@{}lrrrl@{}}
-\toprule
-\textbf{Solver} & \textbf{Optimality Gap} & \textbf{Runtime} & \textbf{Constraints} \\
-\midrule
-CP-SAT (Exact) & 0.000\% & 0.20--0.60\,s & Hard cuts \\
-\rowcolor{GoodGreen!10}
-\textbf{Greedy 1-Swap} & \textbf{0.000\%} & \textbf{$<$\,5\,ms} & \textbf{Feasible manifold} \\
-Ballistic SB & 5.36--13.08\% & 0.31\,s & Penalty relaxation \\
-Discrete SB & 19.11--44.79\% & 0.45\,s & Penalty relaxation \\
-Simulated Annealing & 20.46--36.21\% & 2.10\,s & Penalty relaxation \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\vspace{0.5em}
-\textbf{Key insight:} Hard equality constraints ($\sum x_i = K$) require penalty barriers $\lambda(\sum x_i - K)^2$ in continuous solvers, warping phase space. Greedy 1-swap operates \emph{directly on the feasible manifold}, evaluating swaps in $O(1)$ amortized time.
-\end{frame}
-
-% ============================================================
-% SLIDE 9: Closed-Loop Surrogate
-% ============================================================
-\begin{frame}{Active Closed-Loop Planning}
-\textbf{Measure $\to$ Fit $\to$ Solve} iterative refinement loop:
-
-\vspace{0.5em}
-\begin{columns}[T]
-\column{0.55\textwidth}
-\begin{itemize}
-    \item Rank-6 Factorization Machine surrogate
-    \item Fitted to $\ln(\text{PPL}/\text{PPL}_{\text{dense}})$
-    \item CP-SAT acquisition over $9.9 \times 10^9$ feasible plans
-    \item Dual strategy: exploitation + exploration
-\end{itemize}
-
-\vspace{0.5em}
-\textbf{Result at $K\!=\!18$:}
-\begin{itemize}
-    \item Closed-loop: \textcolor{GoodGreen}{\textbf{+62.99\%}}
-    \item One-shot: +64.52\%
-    \item Random: +115--150\%
-\end{itemize}
-
-\column{0.42\textwidth}
-\centering
-\vspace{0.5em}
-\begin{tikzpicture}
-\node[draw=Teal, fill=Teal!10, rounded corners, inner sep=8pt, text width=3.5cm, align=center] {
-\textbf{Beats one-shot}\\[0.3em]
-\textbf{$-1.53$ pp}\\[0.3em]
-\scriptsize 95\% CI: $[-2.16, -0.90]$\\
-\scriptsize Strictly excludes zero
-};
-
-\vspace{0.8em}
-\node[draw=AccentOrange, fill=AccentOrange!8, rounded corners, inner sep=8pt, text width=3.5cm, align=center] at (0,-2.5) {
-\textbf{Defeats random}\\[0.3em]
-\textbf{52--87 pp}
-};
-\end{tikzpicture}
-\end{columns}
-\end{frame}
-
-% ============================================================
-% SLIDE 10: Deployment
-% ============================================================
-\begin{frame}{Deployment: Zero-Code, Open-Source}
-\begin{columns}[T]
-\column{0.50\textwidth}
-\textbf{100\% Open-Source Stack:}
-\begin{itemize}
-    \item \textbf{Qwen3-0.6B} (Apache-2.0)
-    \item \textbf{llama.cpp} (MIT) with native\\Snapdragon backends
-    \item WikiText-2, HotpotQA (public)
-\end{itemize}
-
-\vspace{0.5em}
-\textbf{Native Flag Generation:}\\
-Plans emit standard CLI parameters---no driver modifications required.
-
-\column{0.45\textwidth}
-\textbf{Quality Assurance:}
-\begin{itemize}
-    \item 56 unit tests, 100\% pass rate
-    \item Automated numerical verification
-    \item Cross-runtime validation
-\end{itemize}
-
-\vspace{0.5em}
-\textbf{Target Platforms:}
-\begin{itemize}
-    \item Snapdragon X Elite / X2 Elite PCs
-    \item Snapdragon 8 Gen 3 / 8 Elite phones
-    \item Any \texttt{llama.cpp}-compatible device
-\end{itemize}
-\end{columns}
-\end{frame}
-
-% ============================================================
-% SLIDE 11: Summary
-% ============================================================
-\begin{frame}{Key Takeaways}
-\begin{center}
-\Large\textbf{Ising-Edge: Unlocking Heterogeneous On-Device AI}
-\end{center}
-
-\vspace{0.5em}
-\begin{columns}[T]
-\column{0.30\textwidth}
-\centering
-\textbf{Unified\\Optimization}\\[0.5em]
-\normalsize Jointly maps\\CPU/GPU/NPU,\\quantization \&\\low-rank compression\\into a single QUBO
-
-\column{0.30\textwidth}
-\centering
-\textbf{Verified\\Accuracy Gains}\\[0.5em]
-\normalsize \textbf{91.6 pp} advantage\\at matched bytes\\
-\textbf{65 pp} MPO vs SVD\\
-All with paired bootstrap CIs
-
-\column{0.30\textwidth}
-\centering
-\textbf{Real-Time\\Edge Planning}\\[0.5em]
-\normalsize \textbf{0\% gap} in $<$5\,ms\\
-Native \texttt{llama.cpp}\\
-Zero-code deploy\\
-100\% open-source
-\end{columns}
-
-\vspace{1.5em}
-\begin{center}
-\large Thank you.
-\end{center}
-\end{frame}
-
 \end{document}

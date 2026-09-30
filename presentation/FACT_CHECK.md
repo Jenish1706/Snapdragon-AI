@@ -1,117 +1,36 @@
-# Fact-Check & Empirical Verification Ledger
+# FACT_CHECK — Ising-Edge submission documents
 
-**Project:** Ising-Edge for Snapdragon AI Challenge 2026  
-**Track:** On-Device Generative AI Acceleration & Optimization  
-**Author:** Jenish Patel  
-**Verification Date:** September 30, 2026  
-**Verification Status:** ALL NUMBERS VERIFIED (Exit status: `0` via `scripts/check_numbers.py`)
+Every number in `pitch_deck.pdf`, `pitch_deck.pptx` and `project_description.pdf` is produced by
+`build_data.py` from the raw files in `../results/` and stored in `generated/values.json`.
+`generated/checks.txt` lists the 269 consistency checks that passed (the script stops on any failure).
+Paired-bootstrap intervals were **recomputed** from per-chunk NLL with `isingedge.loop.stats.paired_bootstrap`
+(seed 0, 4,000 resamples) and match the stored CSVs.
 
----
+| Claim (as shown) | Value | Source file | Section / row |
+|---|---|---|---|
+| Environment of all measurements | PyTorch 2.14.1 + CUDA 12.6, fp32, RTX 3060 Laptop GPU | all `results/**.csv` | `build` column |
+| Dense PPL, full split / 40 chunks | 21.88 (584 chunks) / 19.60 | `results/compression/ppl.csv`; `results/sensitivity/qwen3-0.6b_layer_sensitivity.csv` | `dense-fp32`; `kind=dense` |
+| keep 0.8 = rank 608 (79.2%), keep 0.9 = rank 704 (91.7%) | ranks, params | `qwen3-0.6b_layer_sensitivity.csv` | `rank`, `params`, `dense_params` |
+| Single-layer damage +0.45% (L8) to +24.67% (L27), median +2.68% (+1.68% at keep 0.9) | | `qwen3-0.6b_layer_sensitivity.csv` | `svd` rows |
+| 33 of 40 pairs super-additive; median +0.21 pp; max +10.06 pp (L0+L1) | | `results/sensitivity/qwen3-0.6b_pair_sensitivity.csv` | `interaction_pct` |
+| 24 MLPs: +275.60% measured vs +57.75% summed, +76.75% log, +73.62% pair model (4.8×) | 40 chunks | `results/matched_bytes/summary.csv` | `mb_K24_pairwise` |
+| Matched bytes (full split), model plan vs best of 3 random: K=6 −10.61 [−11.24, −9.95]; K=12 −9.78 [−10.59, −8.94]; K=18 −91.61 [−94.03, −89.04] (+66.90% vs +158.51%); K=24 **+23.42 worse** [+17.24, +29.55] | pp of dense PPL | `results/matched_bytes/summary.csv` + `qwen3-0.6b_plan_chunk_nll.csv` | `CI all chunks` rows (recomputed) |
+| Pair, additive, log-additive and greedy pick the same layers | | `results/matched_bytes/summary.csv` | `method` label |
+| 9,928,631,398 feasible plans (K=12), 48 binaries | | `isingedge/loop/space.py` `Space.count()` | computed |
+| Loop = one-shot plan in 3/3 (K=12) and 2/3 (K=18) seeds; one-shot full split +25.45% / +64.52%; random +45.68–47.50% / +115.37–149.85% (trails by 20.2–85.3 pp) | | `results/loop/summary.csv` | per method/seed |
+| K=18 seed 2: −1.53 pp [−2.16, −0.90] full split, +0.83 pp on 40 chunks; one swapped layer (3 vs 4); plan was also in the one-shot top-24 | | `results/loop/summary.csv`, `qwen3-0.6b_plan_perplexity.csv` | `lp_c984076625`, `lp_ee56d68d3a` |
+| All loop acquisitions CP-SAT OPTIMAL | | `results/loop/evals.csv` | `status` |
+| Calibration ρ 0.78–0.81 (K=12), 0.52–0.63 (K=18); bias −0.25 to −0.18 | 72 held-out plans | `results/loop/calibration.csv` | all rows |
+| Greedy matched exact optimum in 15/72 rounds (median gap 13.2% / 4.1%); ballistic SB raw infeasible 72/72 | | `results/loop/solver_gaps.csv` | `gap_pct`, `raw_feasible` |
+| KL proxy ρ = 0.64 [0.35, 0.83] < 0.90 | 28 layers | `results/sensitivity/qwen3-0.6b_kl_proxy_summary.csv` | `KL(dense||comp)` |
+| MPO 39.05 vs SVD 53.17 PPL, layers 2–25, equal params (91.7%), bond 240 vs rank 704 | full split | `results/compression/ppl.csv` | `imx-mpoA-k0.9`, `imx-svd-k0.9` |
+| Tests: 56 collected, 52 pass, 3 skip, 1 fail | | `python -m pytest tests/` (this snapshot) | `test_smoke` imports missing `isingedge.export`, `isingedge.runtime` |
+| Implemented-but-unvalidated: SnapTwin, placement QUBO, adb/llama-bench runners | | `isingedge/twin`, `isingedge/qubo`, `isingedge/bench`, `scripts/bench_sweep.py` | no device results in `results/` |
 
-## 1. Master Claims Verification Table
-
-The following table cross-references every empirical claim, benchmark metric, and quantitative statement appearing in the presentation package (`pitch_deck.tex`, `project_description.tex`, and `docs/PROPOSAL.md`) against raw empirical ledgers in `results/`.
-
-| Claim | Exact Value | Source File | Verification Status |
-| :--- | :--- | :--- | :--- |
-| **Dense Baseline Full-Split Perplexity** | `21.884` (exact `21.884388762207106` $\pm 0.1914$) | `results/compression/ppl.csv` (row 2), `docs/RESULTS.md` Section 1 | `VERIFIED` |
-| **Dense Baseline Fast-Split Perplexity** | `19.598` (exact `19.598010497589463` $\pm 0.6424$) | `results/sensitivity/qwen3-0.6b_layer_sensitivity.csv` (row 2), `docs/RESULTS.md` Section 1 | `VERIFIED` |
-| **Super-Additivity of Deep Composition** | Measured `+275.56 %` (`+275.6 %`) vs. Linear Sum `+57.78 %` (`+57.8 %`); Log-additive `+76.75 %` (4.8x underestimation) | `results/sensitivity/additivity.csv` (rows 17, 21), `docs/RESULTS.md` Section 3.2 | `VERIFIED` |
-| **Super-Additive Layer-Pair Prevalence** | `33 of 40 pairs` (`82.5 %`) exhibit positive interaction ($\Delta\text{PPL}_{\text{pair}} > \Delta\text{PPL}_i + \Delta\text{PPL}_j$) | `results/sensitivity/qwen3-0.6b_pair_sensitivity.csv`, `docs/RESULTS.md` Section 3.1 | `VERIFIED` |
-| **Layer 27 Maximum Single-Layer Sensitivity** | `+24.67 %` $\Delta$PPL (`24.668109825826047 %`, PPL `24.432` vs `19.598`, keep 0.8 SVD) | `results/sensitivity/qwen3-0.6b_layer_sensitivity.csv` (row 30), `docs/RESULTS.md` Section 2 | `VERIFIED` |
-| **Combinatorial Superiority at Matched Bytes ($K=18$)** | `91.61 pp advantage` (Pairwise plan `+66.90 %` vs. Random1 `+158.51 %` on full split; paired bootstrap $95\%\text{ CI } [-94.03, -89.04]\text{ pp}$, $p < 10^{-4}$) | `results/matched_bytes/summary.csv` (rows 14, 16, 19), `docs/RESULTS.md` Section 4 | `VERIFIED` |
-| **Tensor Network Composition Win (MPO vs. SVD)** | 3-Core MPO PPL `39.049` (`+78.43 %`) vs. Activation-Aware SVD PPL `53.174` (`+142.98 %`) across 24 layers at keep 0.9 ($\approx 64.55\text{ pp}$ advantage) | `results/compression/ppl.csv` (rows 3, 4), `docs/RESULTS.md` Section 5 | `VERIFIED` |
-| **Greedy 1-Swap Descent Optimality Gap & Latency** | `0.000 %` optimality gap across all test instances in `< 0.005 s` (`< 5 ms`) (vs. CP-SAT $0.20\text{--}0.60\text{ s}$, SB lags by $5.36\text{--}13.08\ \%$, SA lags by $20.46\text{--}36.21\ \%$) | `results/loop/solver_gaps.csv`, `docs/RESULTS.md` Section 6 | `VERIFIED` |
-| **Closed-Loop Surrogate Optimization Gain ($K=18$)** | `-1.53 pp` improvement over one-shot pairwise plan (`+62.99 %` vs. `+64.52 %`; paired bootstrap $95\%\text{ CI } [-2.16, -0.90]\text{ pp}$, strictly excluding zero) | `results/loop/summary.csv` (row 18), `docs/RESULTS.md` Section 8 | `VERIFIED` |
-| **Closed-Loop Defeat of Random Baselines ($K=18$)** | Closed-loop beats random allocations by `50.86 pp` (vs Seed 0 `+115.37 %`) up to `86.86 pp` (vs Seed 1 `+149.85 %`) | `results/loop/summary.csv` (rows 18, 21, 22), `docs/RESULTS.md` Section 8 | `VERIFIED` |
-| **HotpotQA Context Prompt Packing Recall** | QUBO matches Top-K recall within $\pm 0.01$ (`0.852` vs. `0.841` at token budget 320; paired bootstrap 95% CI contains zero), while MMR drops recall at 8 of 9 budgets | `docs/RESULTS.md` Section 7, `docs/PROPOSAL.md` Section 7 | `VERIFIED` |
-| **Snapdragon Heterogeneous Hardware Asymmetry (Galaxy S26 Phone)** | Hexagon NPU prefill `2,643 tok/s` vs CPU `353 tok/s` ($7.49\times$) and GPU `665 tok/s` ($3.97\times$, up to $5\times$ typical); NPU decode `45.9 tok/s` vs CPU `47.9 tok/s` (CPU faster) | `docs/PROPOSAL.md` Section 1 Table (from Qualcomm `ai-hub-models/perf.yaml`), `docs/SUBMISSION.md` | `VERIFIED` |
-| **Snapdragon Heterogeneous Hardware Asymmetry (X Elite PC)** | CPU decode `59.8 tok/s` vs Hexagon NPU decode `26.9 tok/s` (CPU $2.22\times$ faster decode / NPU $>2\times$ slower decode); NPU prefill `968 tok/s` vs CPU `584 tok/s` ($1.66\times$ faster) | `docs/PROPOSAL.md` Section 1 Table (from Qualcomm `ai-hub-models/perf.yaml`), `docs/SUBMISSION.md` | `VERIFIED` |
-| **Unit Test Suite Coverage** | `56 passed unit tests` across 11 test modules covering models, solvers, and runtime emission | `tests/` directory (`test_models.py`, `test_solvers.py`, `test_runtime.py`, etc.) | `VERIFIED` |
-
----
-
-## 2. Quantitative Verification Details by Section
-
-### 2.1 Baseline Perplexity (WikiText-2, Qwen3-0.6B)
-* **Dataset & Setting:** WikiText-2 standard test set, sequence length 512 tokens, 584 evaluation chunks (299,008 total tokens).
-* **Full Split Dense Baseline:** PPL $= \mathbf{21.884} \pm 0.1914$ (`results/compression/ppl.csv`, row 2).
-* **Fast Split Dense Baseline (40 chunks):** PPL $= \mathbf{19.598} \pm 0.6424$ (`results/sensitivity/qwen3-0.6b_layer_sensitivity.csv`, row 2).
-* **Full-Rank SVD Sanity Check:** PPL $= 19.598$, confirming zero numerical distortion for uncompressed rank transformations.
-
-### 2.2 Super-Additivity & Layer-Pair Coupling
-* **Single Layer Sensitivity Range:**
-  * Least sensitive layer: Layer 0 ($\Delta\text{PPL} = +0.45\ \%$ at keep 0.8).
-  * Most sensitive layer: Layer 27 ($\Delta\text{PPL} = \mathbf{+24.67\ \%}$, exact $24.6681\ \%$, `qwen3-0.6b_layer_sensitivity.csv`).
-* **Random Layer Pairs (40 pairs tested at keep 0.8):**
-  * Super-additive count: $\mathbf{33\text{ of }40\text{ pairs}}$ ($82.5\ \%$) show $\Delta\text{PPL}_{\text{pair}} > \Delta\text{PPL}_i + \Delta\text{PPL}_j$.
-  * Median interaction term: $+0.21\text{ pp}$.
-  * Peak interaction: $+10.06\text{ pp}$ between adjacent layers 0 and 1.
-* **Cascading Multi-Layer Degradation (Layers 2–25, 24 MLPs):**
-  * Linear sum prediction: $+57.78\ \%$ (PPL 34.53).
-  * Log-additive prediction: $+76.75\ \%$ (PPL 38.68).
-  * Actual measured degradation (40 chunks): $\mathbf{+275.56\ \%}$ (PPL 73.60).
-  * Actual measured degradation (full split): $\mathbf{+284.18\ \%}$ (PPL 84.07).
-  * Ratio: Measured damage exceeds linear additive prediction by $\mathbf{4.77\times}$ ($\approx 4.8\times$), mathematically proving the failure of isolated layer sensitivity metrics.
-
-### 2.3 Combinatorial Superiority at Matched Bytes ($K=18$)
-* **Configuration:** Exactly 18 MLP blocks compressed at keep 0.8; identical memory footprint and parameter count across plans.
-* **Pairwise Optimal Plan (`mb_K18_pairwise`):** $\Delta\text{PPL} = \mathbf{+66.90\ \%}$ (`results/matched_bytes/summary.csv`, row 14).
-* **Random Plan 1 (`mb_K18_random1`):** $\Delta\text{PPL} = \mathbf{+158.51\ \%}$ (`results/matched_bytes/summary.csv`, row 16).
-* **Delta / Advantage:** $-91.6065\text{ pp}$ ($\mathbf{91.61\text{ pp}}$ advantage over random allocation).
-* **Paired Bootstrap Statistics:** 4,000 resamples, $95\%\text{ CI } = \mathbf{[-94.03, -89.04]\text{ pp}}$ ($p < 10^{-4}$), strictly excluding zero.
-
-### 2.4 Deep Tensor Networks: MPO vs. SVD (Layers 2–25, Keep 0.9)
-* **Parameter Budget:** Both compress layers 2–25 to exactly 0.917 of dense model parameter footprint.
-* **3-Core MPO:** Full-split PPL $= \mathbf{39.049}$ ($\Delta\text{PPL} = +78.43\ \%$, relative parameter error $= 0.354$, `results/compression/ppl.csv`, row 4).
-* **Activation-Aware SVD:** Full-split PPL $= \mathbf{53.174}$ ($\Delta\text{PPL} = +142.98\ \%$, relative parameter error $= 0.322$, `results/compression/ppl.csv`, row 3).
-* **Performance Delta:** MPO delivers an advantage of $142.98 - 78.43 = \mathbf{64.55\text{ pp}}$ ($\approx 65\text{ pp}$).
-* **Theoretical Mechanism:** SVD minimizes Frobenius error locally but aligns singular error directions constructively across layers, destroying representation rank. MPO tensor core contraction distributes noise isotropically, resulting in destructive interference along the residual stream.
-
-### 2.5 Combinatorial Solvers & Manifold Local Search
-* **Benchmarked Solvers:** CP-SAT (linearized IP), Greedy 1-Swap Descent, Ballistic Simulated Bifurcation (bSB), Discrete Simulated Bifurcation (dSB), Simulated Annealing (SA).
-* **Greedy 1-Swap Descent:** Exact $\mathbf{0.000\ \%}$ optimality gap across all test instances, converging in $\mathbf{< 5\text{ ms}}$ (median $2\text{--}4\text{ ms}$).
-* **CP-SAT:** Exact $\mathbf{0.000\ \%}$ optimality gap, runtime $0.20\text{--}0.60\text{ s}$.
-* **Continuous Heuristic Deficits:**
-  * Ballistic SB: Optimality gap $5.36\ \%\text{ to } 13.08\ \%$ ($0.31\text{ s}$).
-  * Discrete SB: Optimality gap $19.11\ \%\text{ to } 44.79\ \%$ ($0.45\text{ s}$).
-  * Simulated Annealing: Optimality gap $20.46\ \%\text{ to } 36.21\ \%$ ($2.10\text{ s}$).
-* **Root Cause:** Quadratic penalty relaxations $\lambda(\sum x_i - K)^2$ warp the optimization landscape; discrete 1-swap stays strictly on the feasible manifold $\mathcal{S}_K$.
-
-### 2.6 Closed-Loop Surrogate Planning (S4)
-* **Surrogate Model:** Rank-6 Factorization Machine trained on standardized $\ln(\text{PPL}/\text{PPL}_{\text{dense}})$ with dual acquisition (global CP-SAT + 80% subsample CP-SAT).
-* **Result at $K=18$ (Seed 2):** Measured full-split degradation $\mathbf{+62.99\ \%}$ vs. One-shot pairwise baseline $\mathbf{+64.52\ \%}$.
-* **Advantage over One-Shot PW:** $\mathbf{-1.53\text{ pp}}$ (exact $-1.5302\text{ pp}$, paired bootstrap $95\%\text{ CI } = \mathbf{[-2.16, -0.90]\text{ pp}}$, excluding zero).
-* **Advantage over Random Baselines:**
-  * vs. Random Seed 0 (+115.37%): $\mathbf{-50.86\text{ pp}}$ (CI $[-52.45, -49.23]\text{ pp}$).
-  * vs. Random Seed 1 (+149.85%): $\mathbf{-85.33\text{ pp}}$ (CI $[-87.73, -82.89]\text{ pp}$).
-  * vs. Random Seed 2 (+131.04%): $\mathbf{-66.53\text{ pp}}$ (CI $[-68.74, -64.29]\text{ pp}$).
-
-### 2.7 Hardware Benchmarking (Qualcomm Published `perf.yaml`)
-* **Source:** Official Qualcomm AI Hub benchmarks for Qwen3-1.7B Q4_0 (`ai-hub-models/perf.yaml`).
-* **Prefill Speedup (Galaxy S26 Phone, 512 context):** Hexagon NPU achieves $2,643\text{ tok/s}$ vs CPU $353\text{ tok/s}$ ($7.49\times$) and GPU $665\text{ tok/s}$ ($3.97\times$). Up to $5\times$ typical speedup.
-* **Decode Speedup (Snapdragon X Elite CRD PC, 512 context):** CPU decodes at $59.8\text{ tok/s}$ vs Hexagon NPU $26.9\text{ tok/s}$ ($2.22\times$ faster CPU, NPU $>2\times$ slower).
-
----
-
-## 3. Automated Verification Execution
-
-All numerical claims in this ledger are continuously verified via the automated verification script:
-
-```bash
-python scripts/check_numbers.py
-```
-
-Expected output:
-```
-=== Empirical Results vs Ledger Verification ===
-[OK  ] All-layer MPO PPL ~ 39.05                               -> 39.049
-[OK  ] All-layer SVD PPL ~ 53.17                               -> 53.174
-[OK  ] Dense baseline PPL ~ 19.598                             -> 19.598
-[OK  ] Layer 27 keep 0.8 damage ~ +24.67%                      -> 24.67%
-[OK  ] Super-additive pairs count = 33 of 40                   -> 33/40
-[OK  ] K=18 Random1 diff CI [-94.03, -89.04] pp                -> [-94.03, -89.04]
-[OK  ] S4 Loop K=18 seed 2 beats oneshot-pw by -1.53 pp        -> -1.53 pp
-
-All empirical metrics successfully verified against result CSVs.
-```
+## Intentionally omitted (not verifiable from this repository)
+- HotpotQA context-packing results (no result file; `qubo_pack` does not use its QUBO or TTFT term).
+- Qualcomm `perf.yaml` throughput table and SnapTwin held-out errors (`docs/TWIN.md` sources `data/published/`, `results/twin/` are absent).
+- Solver table in `docs/RESULTS.md` ("greedy 0.000% gap < 5 ms", SB 5.36–13.08%): contradicted by `results/loop/solver_gaps.csv`; `isingedge/solve/solvers.py` SA/SB are enumeration stubs.
+- "Cross-runtime validation (Metal vs CUDA)", llama.cpp flag emission (`scripts/plan.py` cannot run against the current package), any on-device latency/energy/memory figure.
+- MPO weight error "0.354" (`results/compression/ppl.csv` stores 39.06); keep 0.7/0.6, data-free SVD and Q4_0/Q8_0 per-layer rows (not in results); "p < 10⁻⁴" (not resolvable with 4,000 resamples).
+- The previous `presentation/` package (commit 6630680) repeated these claims and was replaced.
